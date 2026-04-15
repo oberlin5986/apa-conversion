@@ -33,13 +33,13 @@ def convert_docx_to_markdown(docx_file):
         # 3. SAFE TEXT RUN PROCESSING
         try:
             for run in para.runs:
-                text = run.text
-                if not text: continue
-                if run.italic:
-                    text = f"_{text}_"
-                if run.bold:
-                    text = f"**{text}**"
-                para_text += text
+    text = run.text
+    if not text: continue
+    if run.italic:
+        text = f"[ITALIC]{text}[/ITALIC]"
+    if run.bold:
+        text = f"[BOLD]{text}[/BOLD]"
+    para_text += text
         except Exception:
             # If a run fails, just add the raw paragraph text as a backup
             para_text += para.text
