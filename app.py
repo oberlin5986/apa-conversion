@@ -9,26 +9,21 @@ def convert_docx_to_markdown(docx_file):
     for para in doc.paragraphs:
         para_text = ""
         
-        # Defensive check for styles
-        if para.style and hasattr(para.style, 'name'):
-            style_name = para.style.name
-            if style_name.startswith('Heading'):
-                level = style_name.split()[-1]
-                if level.isdigit():
-                    para_text += "#" * int(level) + " "
-            
-            # Special APA check: If the paragraph is a "Reference" style, 
-            # we can tag it so the LLM knows to check for indents.
-            if "Reference" in style_name:
-                para_text += "[REF] "
+        # --- SAFE HANGING INDENT CHECK ---
+        try:
+            # Check if the paragraph format exists and has a negative first_line_indent
+            if para.paragraph_format and para.paragraph_format.first_line_indent:
+                if para.paragraph_format.first_line_indent.twips < 0:
+                    para_text += "[HANGING INDENT] "
+        except Exception:
+            # If anything goes wrong (missing attributes, etc.), just keep going
+            pass
 
-        # Process the text chunks (Runs)
+        # --- PROCESS TEXT RUNS (Italics/Bold) ---
         for run in para.runs:
             text = run.text
-            if not text:
-                continue
+            if not text: continue
             
-            # Apply Markdown
             if run.italic:
                 text = f"_{text}_"
             if run.bold:
@@ -40,24 +35,23 @@ def convert_docx_to_markdown(docx_file):
     
     return "\n\n".join(full_text)
 
+# --- STREAMLIT UI ---
 st.set_page_config(page_title="APA Pre-Processor", page_icon="📝")
 
 st.title("📝 APA Formatting Pre-Processor")
-st.info("Upload your paper to convert visual formatting (italics/headings) into AI-readable text.")
+st.markdown("This tool translates Word formatting into tags your AI bot can understand.")
 
 uploaded_file = st.file_uploader("Upload your .docx paper", type="docx")
 
 if uploaded_file:
     try:
-        # We use getvalue() here as it's more stable for repeated reads in Streamlit
+        # Get the file bytes
         file_bytes = io.BytesIO(uploaded_file.getvalue())
         md_output = convert_docx_to_markdown(file_bytes)
         
         st.subheader("Formatted Text")
-        st.caption("Copy this into your AI bot:")
-        st.text_area("Markdown Output", value=md_output, height=450)
+        st.text_area("Copy this for your AI Bot:", value=md_output, height=450)
         
-        st.download_button("Download Markdown", md_output, file_name="apa_prepped_paper.md")
+        st.download_button("Download Markdown", md_output, file_name="apa_prepped.md")
     except Exception as e:
-        st.error(f"An error occurred: {e}")
-        st.warning("Try saving your Word document as a 'Strict Open XML Document (.docx)' and uploading again.")
+        st.error(f"Something went wrong: {e}")
