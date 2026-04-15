@@ -3,7 +3,6 @@ from docx import Document
 import io
 
 def convert_docx_to_markdown(docx_file):
-    # Move imports inside to ensure stability
     from docx.enum.text import WD_ALIGN_PARAGRAPH
     
     doc = Document(docx_file)
@@ -23,7 +22,6 @@ def convert_docx_to_markdown(docx_file):
 
         # 2. SAFE HANGING INDENT CHECK
         try:
-            # We check if it exists before checking the value
             fmt = para.paragraph_format
             if fmt and fmt.first_line_indent and fmt.first_line_indent.twips < 0:
                 para_text += "[HANGING INDENT] "
@@ -33,15 +31,15 @@ def convert_docx_to_markdown(docx_file):
         # 3. SAFE TEXT RUN PROCESSING
         try:
             for run in para.runs:
-    text = run.text
-    if not text: continue
-    if run.italic:
-        text = f"[ITALIC]{text}[/ITALIC]"
-    if run.bold:
-        text = f"[BOLD]{text}[/BOLD]"
-    para_text += text
+                text = run.text
+                if not text:
+                    continue
+                if run.italic:
+                    text = f"[ITALIC]{text}[/ITALIC]"
+                if run.bold:
+                    text = f"[BOLD]{text}[/BOLD]"
+                para_text += text
         except Exception:
-            # If a run fails, just add the raw paragraph text as a backup
             para_text += para.text
         
         full_text.append(para_text)
@@ -50,11 +48,9 @@ def convert_docx_to_markdown(docx_file):
 
 # --- STREAMLIT UI ---
 st.set_page_config(page_title="APA Pre-Processor", page_icon="📝")
-
 st.title("📝 APA Formatting Pre-Processor")
 st.markdown("Use this to prepare your paper for the AI Bot.")
 
-# Reset Button
 if st.button("Reset / Clear File"):
     st.rerun()
 
@@ -67,7 +63,6 @@ if uploaded_file:
         
         st.divider()
         
-        # Action Buttons
         col1, col2 = st.columns([1, 1])
         with col1:
             st.download_button(
@@ -78,7 +73,6 @@ if uploaded_file:
             )
         with col2:
             st.success("Conversion Ready!")
-
         with st.expander("View AI-Ready Text Preview"):
             st.text_area("Preview", value=md_output, height=300)
             
